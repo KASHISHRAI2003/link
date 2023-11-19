@@ -1,0 +1,160 @@
+#include<iostream>
+#include<fstream>
+#include<string>
+#include<sstream>
+
+using namespace std;
+
+vector<string> splitString(string s) {
+    stringstream ss(s);
+    string word;
+    vector<string> words;
+    while (ss >> word) {
+        words.push_back(word);
+    }
+    return words;
+}
+
+vector<string> checkID(string user, string pass) {
+    fstream file;
+    file.open("/Users/lakshayverma/Documents/Expense-Tracker/data/data.csv", ios::in);
+    string line;
+    getline(file, line);
+    string data;
+    vector<string> temp;
+    while(getline(file, line)) {
+        temp = splitString(line);
+        if(temp[1] == user) {
+            if(temp[2] == pass) {
+                cout << "Successfully logged in. Welcome " << temp[1] << endl;
+                temp.push_back("Yes");
+                file.close();
+                return temp;
+            } else {
+                cout << "Invalid Password!" << endl;
+                temp.push_back("No");
+                file.close();
+                return temp;
+            }
+        }
+    }
+    cout << "User doesn't exist!" << endl;
+    temp.push_back("No");
+    file.close();
+    return temp;
+}
+
+void createUserTransaction(string fname) {
+    fstream file;
+    file.open(fname, ios::out | ios::app);
+    file << "username transaction recieved/sent";
+    file.close();
+}
+
+void registerUser() {
+    fstream fileRead;
+    fileRead.open("/Users/lakshayverma/Documents/Expense-Tracker/data/data.csv", ios::in);
+    string line;
+    int count = 0;
+    while(getline(fileRead, line)) {
+        count++;
+    }
+    fileRead.close();
+    string username, password;
+    cout << "|---------- EXPENSE TRACKER ----------|" << endl;
+    cout << "| Enter username: ";
+    cin >> username;
+    cout << "| Create password: ";
+    cin >> password;
+    ofstream file;
+    file.open("/Users/lakshayverma/Documents/Expense-Tracker/data/data.csv", ios::out | ios::app);
+    file << "\n" + count + " " + username + " " + password;
+    file.close();
+}
+
+vector<string> loginMenu(string &user, string &pass) {
+    cout << "|----------- EXPENSE TRACKER -----------|" << endl;
+    cout << "Enter Username: ";
+    cin >> user;
+    cout << "Enter Password: ";
+    cin >> pass;
+    vector<string> data = checkID(user, pass);
+    if(data[3] == "Yes") {
+        return data;
+    } else {
+        loginMenu(user, pass);
+    }
+    return data;
+}
+
+bool is_file_exist(const char *fileName) {
+    std::ifstream infile(fileName);
+    return infile.good();
+}
+
+void transaction(string uName, string fName) {
+    int amount;
+    char choice;
+    ofstream file;
+    file.open(fName, ios::out | ios::app);
+    cout << "Enter the amount: ";
+    cin >> amount;
+    cout << "Is the money sent or recieved? (s/r): ";
+    cin >> choice;
+    if(choice == 'r') {
+        file << "\n" + uName + " " << amount << " " << "Recieved";
+    } else if(choice == 's') {
+        file << "\n" + uName + " " << amount << " " << "Sent";
+    } else {
+        cout << "Invalid choice";
+    } 
+    file.close();
+}
+
+void viewAll(string fName) {
+    fstream file;
+    file.open(fName, ios::in);
+    string line;
+    while(getline(file, line)) {
+        cout << line << endl;
+    }
+    file.close();
+}
+
+void menu(string uName, string fName) {
+    int choice;
+    cout << "|------------ EXPENSE TRACKER ------------|" << endl;
+    cout << "| 1. Add Transaction" << endl;
+    cout << "| 2. Show all transaction" << endl;
+    cout << "Choice : ";
+    cin >> choice;
+    if(choice == 1) {
+        transaction(uName, fName);
+    } else if(choice == 2) {
+        viewAll(fName);
+    }
+    menu(uName, fName);
+}
+
+int main() {
+    string username;
+    string password;
+    vector<string> data;
+    cout << "|----------- EXPENSE TRACKER -----------|" << endl;
+    cout << "| 1. Register" << endl;
+    cout << "| 2. Login" << endl;
+    int choice;
+    cout << "Enter choice : ";
+    cin >> choice;
+    if(choice == 1) {
+        registerUser();
+    } else {
+        data = loginMenu(username, password);
+    }
+    string fileName = "/Users/lakshayverma/Documents/Expense-Tracker/data/" + data[1] + "Transaction.csv";
+    if(!is_file_exist(fileName.c_str())) {
+        createUserTransaction(fileName);
+    }
+    menu(username, fileName);
+    return 0;
+}
